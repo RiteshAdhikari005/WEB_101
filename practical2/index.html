@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weather API Dashboard</title>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+    }
+
+    .tab {
+      padding: 10px;
+      background: #ddd;
+      cursor: pointer;
+      display: inline-block;
+    }
+
+    .tab.active {
+      background: #3498db;
+      color: white;
+    }
+
+    .tab-content {
+      display: none;
+      margin-top: 20px;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    button {
+      margin-top: 10px;
+      padding: 8px;
+      width: 100%;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>Weather API Dashboard</h1>
+
+<div class="container">
+
+  <!-- ✅ TABS -->
+  <div class="tabs">
+    <div class="tab active" data-tab="get">GET Weather</div>
+    <div class="tab" data-tab="post">POST Location</div>
+    <div class="tab" data-tab="saved">Saved Locations</div>
+    <div class="tab" data-tab="api-info">API Info</div>
+  </div>
+
+  <!-- ✅ GET TAB -->
+  <div id="get-tab" class="tab-content active">
+    <h2>Get Weather</h2>
+    <input type="text" id="city-input" placeholder="Enter city">
+    <button id="get-weather">Get Weather</button>
+    <div id="weather-result"></div>
+  </div>
+
+  <!-- ✅ POST TAB -->
+  <div id="post-tab" class="tab-content">
+    <h2>Save Location</h2>
+
+    <input type="text" id="location-name" placeholder="Location Name">
+    <input type="text" id="location-city" placeholder="City">
+    <input type="text" id="location-country" placeholder="Country">
+    <input type="text" id="location-notes" placeholder="Notes">
+
+    <button id="save-location">Save</button>
+  </div>
+
+  <!-- ✅ SAVED TAB -->
+  <div id="saved-tab" class="tab-content">
+    <h2>Saved Locations</h2>
+    <div id="saved-locations"></div>
+  </div>
+
+  <!-- ✅ API INFO TAB -->
+  <div id="api-info-tab" class="tab-content">
+    <h2>API Info</h2>
+    <div id="response-info">No requests yet</div>
+  </div>
+
+</div>
+
+<!-- ✅ EDIT MODAL (REQUIRED for your JS) -->
+<div id="edit-modal" style="display:none;">
+  <input type="hidden" id="edit-id">
+  <input type="text" id="edit-name">
+  <input type="text" id="edit-city">
+  <input type="text" id="edit-country">
+  <input type="text" id="edit-notes">
+
+  <button id="update-location">Update</button>
+  <button id="cancel-edit">Cancel</button>
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
