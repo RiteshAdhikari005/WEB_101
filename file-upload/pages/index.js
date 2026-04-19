@@ -1,27 +1,20 @@
-// pages/index.js
-// This is the FRONTEND - the form users see and interact with.
-
 import { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { useDropzone } from "react-dropzone";
 import axios from "axios";
 
 export default function Home() {
-  const [file, setFile] = useState(null);         // The selected file
-  const [preview, setPreview] = useState(null);   // Image preview URL
-  const [progress, setProgress] = useState(0);    // Upload % progress
-  const [status, setStatus] = useState("");       // Success/error message
+  const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [progress, setProgress] = useState(0);
+  const [status, setStatus] = useState("");
   const [uploading, setUploading] = useState(false);
 
   const { handleSubmit, formState: { errors }, setError, clearErrors } = useForm();
 
-  // ─────────────────────────────────────────────
-  // DRAG & DROP LOGIC
-  // ─────────────────────────────────────────────
   const onDrop = useCallback((acceptedFiles, rejectedFiles) => {
     clearErrors("file");
 
-    // If file was rejected (wrong type)
     if (rejectedFiles.length > 0) {
       setError("file", { message: "Only images and PDFs are allowed." });
       return;
@@ -29,7 +22,6 @@ export default function Home() {
 
     const selected = acceptedFiles[0];
 
-    // ✅ File size validation (5MB)
     if (selected.size > 5 * 1024 * 1024) {
       setError("file", { message: "File must be under 5MB." });
       return;
@@ -37,27 +29,24 @@ export default function Home() {
 
     setFile(selected);
 
-    // Show image preview if it's an image
     if (selected.type.startsWith("image/")) {
-      setPreview(URL.createObjectURL(selected));
+      setPreview({ url: URL.createObjectURL(selected), name: selected.name, type: selected.type });
+    } else if (selected.type === "application/pdf") {
+      setPreview({ name: selected.name, type: selected.type });
     } else {
-      setPreview(null); // No preview for PDFs
+      setPreview(null);
     }
   }, []);
 
-  // react-dropzone setup
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      "image/*": [],          // all images
-      "application/pdf": [],  // PDFs only
+      "image/*": [],
+      "application/pdf": [],
     },
     maxFiles: 1,
   });
 
-  // ─────────────────────────────────────────────
-  // UPLOAD LOGIC
-  // ─────────────────────────────────────────────
   const onSubmit = async () => {
     if (!file) {
       setError("file", { message: "Please select a file first." });
@@ -65,16 +54,17 @@ export default function Home() {
     }
 
     const formData = new FormData();
-    formData.append("file", file); // "file" must match what the API expects
+    formData.append("file", file);
 
     try {
       setUploading(true);
       setProgress(0);
       setStatus("");
 
-      const response = await axios.post("/api/upload", formData, {
+      console.log("Uploading file:", file.name, "Type:", file.type);
+
+      const response = await axios.post("http://localhost:8000/api/upload", formData, {
         headers: { "Content-Type": "multipart/form-data" },
-        // ✅ Track upload progress
         onUploadProgress: (progressEvent) => {
           const percent = Math.round(
             (progressEvent.loaded * 100) / progressEvent.total
@@ -89,6 +79,7 @@ export default function Home() {
       setProgress(0);
 
     } catch (err) {
+      console.error("Upload error:", err);
       const msg = err.response?.data?.error || "Upload failed.";
       setStatus("❌ " + msg);
     } finally {
@@ -96,9 +87,6 @@ export default function Home() {
     }
   };
 
-  // ─────────────────────────────────────────────
-  // UI
-  // ─────────────────────────────────────────────
   return (
     <div style={styles.page}>
       <div style={styles.card}>
@@ -107,7 +95,6 @@ export default function Home() {
 
         <form onSubmit={handleSubmit(onSubmit)}>
 
-          {/* ── Drag & Drop Zone ── */}
           <div
             {...getRootProps()}
             style={{
@@ -124,12 +111,10 @@ export default function Home() {
             )}
           </div>
 
-          {/* ── Validation Error ── */}
           {errors.file && (
             <p style={styles.error}>{errors.file.message}</p>
           )}
 
-          {/* ── Selected File Info ── */}
           {file && (
             <div style={styles.fileInfo}>
               <p>📄 <strong>{file.name}</strong></p>
@@ -137,12 +122,24 @@ export default function Home() {
             </div>
           )}
 
-          {/* ── Image Preview ── */}
           {preview && (
-            <img src={preview} alt="Preview" style={styles.preview} />
+            <div style={styles.previewBox}>
+              <h3 style={styles.previewTitle}>Preview:</h3>
+              <div style={styles.previewInner}>
+                {preview.type?.startsWith("image/") ? (
+                  <img src={preview.url} alt={preview.name} style={styles.previewImg} />
+                ) : preview.type === "application/pdf" ? (
+                  <div style={styles.pdfBox}>
+                    <span style={styles.pdfIcon}>📄</span>
+                    <span>{preview.name}</span>
+                  </div>
+                ) : (
+                  <div>File selected: {preview.name}</div>
+                )}
+              </div>
+            </div>
           )}
 
-          {/* ── Progress Bar ── */}
           {uploading && (
             <div style={styles.progressWrapper}>
               <div style={{ ...styles.progressBar, width: `${progress}%` }} />
@@ -150,7 +147,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* ── Submit Button ── */}
           <button
             type="submit"
             disabled={uploading}
@@ -163,16 +159,12 @@ export default function Home() {
           </button>
         </form>
 
-        {/* ── Status Message ── */}
         {status && <p style={styles.status}>{status}</p>}
       </div>
     </div>
   );
 }
 
-// ─────────────────────────────────────────────
-// STYLES
-// ─────────────────────────────────────────────
 const styles = {
   page: {
     minHeight: "100vh",
@@ -211,13 +203,36 @@ const styles = {
     fontSize: "14px",
   },
   meta: { color: "#94a3b8", fontSize: "12px", marginTop: "4px" },
-  preview: {
+  previewBox: {
+    marginBottom: "16px",
+  },
+  previewTitle: {
+    fontSize: "14px",
+    fontWeight: "500",
+    marginBottom: "4px",
+  },
+  previewInner: {
+    border: "1px solid #e2e8f0",
+    borderRadius: "8px",
+    padding: "8px",
+  },
+  previewImg: {
     width: "100%",
     borderRadius: "8px",
-    marginBottom: "16px",
     maxHeight: "200px",
     objectFit: "cover",
   },
+  pdfBox: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    padding: "8px",
+    background: "#f8fafc",
+    borderRadius: "8px",
+    fontSize: "14px",
+    color: "#64748b",
+  },
+  pdfIcon: { fontSize: "24px" },
   progressWrapper: {
     background: "#e2e8f0",
     borderRadius: "999px",
